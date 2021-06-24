@@ -1,0 +1,319 @@
+---
+title: "Liberia datos climaticos"
+author: "Mauricio Arce"
+date: "23/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+# Proyecto 01
+### Carga de Paquetes
+```{r message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(hrbrthemes)
+library(gridExtra)
+```
+#### Datos climaticos de la ciudad Liberia
+```{r}
+clm <- read.csv("liberia_datos_climaticos.csv", sep= ",", na.strings = "", dec=",")
+```
+
+#### Eliminar las celdas vacías
+```{r}
+clm[!complete.cases(clm),]
+
+clm <- na.omit(clm)
+```
+
+#### Visualización de los datos 
+```{r}
+View(clm)
+head(clm)
+```
+
+#### Estructura de los datos
+```{r}
+str(clm)
+```
+#### Renombramiento de las Columnas
+```{r}
+clm$Temperatura..Celsius.<-as.numeric(clm$Temperatura..Celsius.)
+clm$HumedadRelativa....<-as.numeric(clm$HumedadRelativa....)
+clm$VelocidadViento..m.s.<-as.numeric(clm$VelocidadViento..m.s.)
+clm$Lluvia..mm.<-as.numeric(clm$Lluvia..mm.)
+clm$Irradiacion..W.m2.<-as.numeric(clm$Irradiacion..W.m2.)
+clm$EvapoTranspiracion..mm.<-as.numeric(clm$EvapoTranspiracion..mm.)
+
+clm_ren <- clm %>%
+  rename(Fecha = Date,
+         Temperatura = Temperatura..Celsius.,
+         Humedad = HumedadRelativa....,
+         Viento = VelocidadViento..m.s.,
+         Lluvia = Lluvia..mm.,
+         Irradiacion = Irradiacion..W.m2.,
+         Evapotranspiracion = EvapoTranspiracion..mm.)
+```
+#### Visualización del renombramiento de las columnas
+```{r}
+View(clm_ren)
+```
+### Visualización de los datos climaticos a través de histogramas
+#### Histograma de Temperatura
+```{r}
+tem <- ggplot(clm_ren,aes(x = Temperatura)) +
+  geom_histogram (binwidth = 1,
+                  color = "red",
+                  size = 1,
+                  fill = "white") +
+  ggtitle("Temperatura en Liberia") +
+  xlab("Rango") +
+  ylab("Celsius") +
+  theme_ipsum()
+tem
+```
+
+### Histograma de Humedad Relativa
+
+```{r}
+humre <- ggplot(clm_ren,aes(x = Humedad)) +
+  geom_histogram (binwidth = 1,
+                  color = "blue",
+                  size = 1,
+                  fill = "white") +
+  ggtitle("Humedad Relativa en Liberia") +
+  xlab("Rango") +
+  ylab("Porcentaje") +
+  theme_ipsum()
+humre
+```
+
+### Histograma de Velocidad de Viento 
+
+```{r}
+vie <- ggplot(clm_ren,aes(x = Viento)) +
+  geom_histogram (binwidth = 1,
+                  color = "white",
+                  size = 1,
+                  fill = "blue") +
+  ggtitle("Velocidad del viento en Liberia") +
+  xlab("Rango") +
+  ylab("(m/s") +
+  theme_ipsum()
+vie 
+```
+
+### Histograma de Lluvia 
+
+```{r}
+lluv <- ggplot(clm_ren,aes(x = Lluvia)) +
+  geom_histogram (binwidth = 10,
+                  color = "blue",
+                  size = 1,
+                  fill = "white") +
+  ggtitle("Cantidad de lluvia en Liberia") +
+  xlab("Rango") +
+  ylab("(mm.") +
+  theme_ipsum()
+lluv
+```
+
+### Histograma  de Irradiación
+
+```{r}
+irr <- ggplot(clm_ren,aes(x = Irradiacion)) +
+  geom_histogram (binwidth = 6,
+                  color = "orange",
+                  size = 1,
+                  fill = "white") +
+  ggtitle("Cantidad de Irradiación en Liberia") +
+  xlab("Rango") +
+  ylab("(w.m2") +
+  theme_ipsum()
+irr 
+```
+
+### Histograma de Evapotranspiración
+
+```{r}
+evapo <- ggplot(clm_ren,aes(x = Evapotranspiracion)) +
+  geom_histogram (binwidth = 0.3,
+                  color = "brown",
+                  size = 1,
+                  fill = "white") +
+  ggtitle("Cantidad de Evapotranspiración en Liberia") +
+  xlab("Rango") +
+  ylab("mm") +
+  theme_ipsum()
+evapo
+```
+
+### Variables unidas a través de histogramas
+
+```{r}
+grid.arrange(tem, humre, vie, lluv, irr, evapo)
+```
+
+### Promedio de los valores mensuales
+
+```{r}
+Datos_pro <- clm_ren %>%
+  select(Fecha,
+         Temperatura,
+         Humedad,
+         Viento,
+         Lluvia,
+         Irradiacion,
+         Evapotranspiracion)%>%
+  mutate(Fecha = as.Date(Fecha, format = "%d/%m/%Y"))%>%
+  group_by(Fecha = format(Fecha, "%m"))%>%
+  summarise(Temperatura = mean(Temperatura),
+            Humedad = mean(Humedad),
+            Viento = mean(Viento),
+            Lluvia = mean(Lluvia),
+            Irradiacion = mean(Irradiacion),
+            Evapotranspiracion = mean(Evapotranspiracion))
+
+```
+
+## Graficación de las variables
+
+### Promedio de Temperatura
+
+```{r}
+MMQ_tem <- ggplot(Datos_pro, aes(x = Fecha, y = Temperatura, group = 1))+
+  geom_line(color = "red", size = 2)+
+  xlab("Promedio de la temperatura")+
+  ylab("Centigrados")
+MMQ_tem
+```
+
+### Promedio de Humedad Relativa
+
+```{r}
+MMQ_humre <- ggplot(Datos_pro, aes(x = Fecha, y = Humedad, group = 1))+
+  geom_line(color = "blue", size = 2)+
+  xlab("Promedio de la humedad relativa")+
+  ylab("%")
+MMQ_humre
+```
+
+### Promedio de Velocidad de Viento
+
+```{r}
+MMQ_vie <- ggplot(Datos_pro, aes(x = Fecha, y = Viento, group = 1))+
+  geom_line(color = "white", size = 2)+
+  xlab("Promedio de la velocidad de viento")+
+  ylab("m/s")
+MMQ_vie
+```
+
+### Promedio de Lluvia
+
+```{r}
+MMQ_lluv <- ggplot(Datos_pro, aes(x = Fecha, y = Lluvia, group = 1))+
+  geom_line(color = "blue", size = 2)+
+  xlab("Promedio de la cantidad de lluvia")+
+  ylab("mm.")
+MMQ_lluv
+```
+
+### Promedio de Irradiación
+
+```{r}
+MMQ_irr <- ggplot(Datos_pro, aes(x = Fecha, y = Irradiacion, group = 1))+
+  geom_line(color = "orange", size = 2)+
+  xlab("Promedio de la irradiación")+
+  ylab("w.m2")
+MMQ_irr
+```
+
+### Promedio de Evapotranspiración
+
+```{r}
+MMQ_evapo <- ggplot(Datos_pro, aes(x = Fecha, y = Evapotranspiracion, group = 1))+
+  geom_line(color = "brown", size = 2)+
+  xlab("Promedio de la evapotranspiración")+
+  ylab("mm")
+MMQ_evapo
+```
+
+### Promedios unidos a través de graficos
+
+```{r}
+grid.arrange(MMQ_tem, MMQ_humre, MMQ_vie, MMQ_lluv, MMQ_irr, MMQ_evapo, nrow=6, ncol=1)
+```
+
+## Elaboración de Graficos x-y
+
+### Grafico Temperatura
+
+
+```{r}
+Nb_tem <- ggplot(clm_ren, aes(x = Fecha, y = Temperatura, group = 1))+
+  geom_point(color = "red", size = 2)+
+  xlab("Fechas")+
+  ylab("Centigrados")
+Nb_tem
+```
+
+### Grafico Humedad Relativa
+
+
+```{r}
+Nb_humre <- ggplot(clm_ren, aes(x = Fecha, y = Humedad, group = 1))+
+  geom_point(color = "blue", size = 2)+
+  xlab("Fechas")+
+  ylab("%")
+Nb_humre
+```
+
+### Grafico Viento
+
+
+```{r}
+Nb_vie <- ggplot(clm_ren, aes(x = Fecha, y = Viento, group = 1))+
+  geom_point(color = "blue", size = 1)+
+  xlab("Fechas")+
+  ylab("m/s")
+Nb_vie
+```
+
+### Grafico Lluvia
+
+```{r}
+Nb_lluv <- ggplot(clm_ren, aes(x = Fecha, y = Lluvia, group = 1))+
+  geom_point(color = "purple", size = 1)+
+  xlab("Fechas")+
+  ylab("mm.")
+Nb_lluv
+```
+
+### Grafico Irradiación
+
+```{r}
+Nb_irr <- ggplot(clm_ren, aes(x = Fecha, y = Irradiacion, group = 1))+
+  geom_point(color = "orange", size = 1)+
+  xlab("Fechas")+
+  ylab("w.m2")
+Nb_irr
+```
+
+### Grafico Evapotranspiración
+
+```{r}
+Nb_evapo <- ggplot(clm_ren, aes(x = Fecha, y = Evapotranspiracion, group = 1))+
+  geom_point(color = "brown", size = 1)+
+  xlab("Fechas")+
+  ylab("mm.")
+Nb_evapo
+```
+
+### Graficos unidos de nube de puntos
+
+```{r}
+grid.arrange(Nb_tem, Nb_humre, Nb_vie, Nb_lluv, Nb_irr, Nb_evapo, nrow=6, ncol=1)
+```
